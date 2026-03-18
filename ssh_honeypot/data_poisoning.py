@@ -53,7 +53,8 @@ def generate_sql_dump(table_name="sys_users", num_rows=100):
     values = []
     for i in range(1, num_rows + 1):
         secret = random.choice(PROMPT_INJECTIONS) if random.random() < 0.4 else f"sk_live_{random.randint(10000, 99999)}"
-        values.append(f"({i}, 'user_{i}', '{secret.replace('\'', '\'\'')}')")
+        clean_secret = secret.replace("'", "''")
+        values.append(f"({i}, 'user_{i}', '{clean_secret}')")
         
     dump += ", ".join(values) + ";\n"
     dump += "UNLOCK TABLES;\n"

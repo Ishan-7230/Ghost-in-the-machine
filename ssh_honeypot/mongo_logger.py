@@ -17,29 +17,37 @@ class MongoLogger:
         self._connect()
 
     def _connect(self):
-        try:
-            self.client = MongoClient(
-                config.MONGO_URI,
-                serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=5000,
-            )
-            self.client.admin.command("ping")
-            self.db = self.client[config.MONGO_DB]
-            self.connected = True
-            logger.info("Connected to MongoDB at %s", config.MONGO_URI)
+        import time
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                self.client = MongoClient(
+                    config.MONGO_URI,
+                    serverSelectionTimeoutMS=5000,
+                    connectTimeoutMS=5000,
+                )
+                self.client.admin.command("ping")
+                self.db = self.client[config.MONGO_DB]
+                self.connected = True
+                logger.info("Connected to MongoDB at %s", config.MONGO_URI)
 
-            self.db[config.MONGO_COLLECTION_SESSIONS].create_index("session_id", unique=True)
-            self.db[config.MONGO_COLLECTION_SESSIONS].create_index("start_time")
-            self.db[config.MONGO_COLLECTION_COMMANDS].create_index("session_id")
-            self.db[config.MONGO_COLLECTION_COMMANDS].create_index("timestamp")
-            self.db[config.MONGO_COLLECTION_EXPLOITS].create_index("session_id")
-            self.db[config.MONGO_COLLECTION_CREDENTIALS].create_index("session_id")
-            self.db[config.MONGO_COLLECTION_ANALYSIS].create_index("session_id")
+                self.db[config.MONGO_COLLECTION_SESSIONS].create_index("session_id", unique=True)
+                self.db[config.MONGO_COLLECTION_SESSIONS].create_index("start_time")
+                self.db[config.MONGO_COLLECTION_COMMANDS].create_index("session_id")
+                self.db[config.MONGO_COLLECTION_COMMANDS].create_index("timestamp")
+                self.db[config.MONGO_COLLECTION_EXPLOITS].create_index("session_id")
+                self.db[config.MONGO_COLLECTION_CREDENTIALS].create_index("session_id")
+                self.db[config.MONGO_COLLECTION_ANALYSIS].create_index("session_id")
+                return
 
-        except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-            logger.warning("MongoDB not available: %s. Using in-memory fallback.", e)
-            self.connected = False
-            self._init_fallback()
+            except (ConnectionFailure, ServerSelectionTimeoutError, Exception) as e:
+                logger.warning("MongoDB connection failed (attempt %d/%d): %s", attempt + 1, max_retries, e)
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                else:
+                    logger.warning("MongoDB not available after %d attempts. Using in-memory fallback.", max_retries)
+                    self.connected = False
+                    self._init_fallback()
 
     def _init_fallback(self):
         """In-memory fallback when MongoDB is not available."""
