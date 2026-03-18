@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>prod-srv-01 — SSH Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/terminal.css">
+</head>
+<body>
+  <!-- CRT Scanline Overlay -->
+  <div class="crt-overlay"></div>
+  
+  <!-- Terminal Window -->
+  <div class="terminal-window">
+    <div class="terminal-titlebar">
+      <div class="titlebar-buttons">
+        <span class="btn-close"></span>
+        <span class="btn-minimize"></span>
+        <span class="btn-maximize"></span>
+      </div>
+      <div class="titlebar-text">admin@prod-srv-01: ~/deployments</div>
+      <div class="titlebar-status">
+        <span class="status-dot"></span>
+        <span>SSH Connected</span>
+      </div>
+    </div>
+    <div class="terminal-body" id="terminal">
+      <div id="output"></div>
+      <div class="input-line" id="input-line">
+        <span class="prompt" id="prompt">admin@prod-srv-01:~/deployments$ </span>
+        <div class="input-wrapper">
+          <input type="text" id="command-input" autofocus autocomplete="off" spellcheck="false">
+          <span class="cursor-block"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connection Status -->
+  <div class="connection-status" id="connection-status">
+    <span class="conn-icon">⚡</span>
+    <span class="conn-text">Establishing SSH connection...</span>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/terminal.js"></script>
+</body>
+</html>

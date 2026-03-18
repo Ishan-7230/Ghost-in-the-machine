@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  phantasm-gateway:
+    build: .
+    container_name: phantasm-gateway
+    ports:
+      - "3000:3000"  # Attacker/Admin Web Interface
+      - "2222:2222"  # Attacker SSH Interface
+    environment:
+      - MONGO_URI=mongodb://phantasm-db:27017/ghost
+      - AI_PROVIDER=ollama
+      - OLLAMA_URL=http://phantasm-brain:11434
+      - CONSOLE_LOG=true
+    networks:
+      - trap-net
+    depends_on:
+      - phantasm-db
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    # Note: eBPF monitoring can be added here via privileged access or capabilities 
+    # and mounting /sys/kernel/debug if required by the host IDS.
+
+  phantasm-db:
+    image: mongo:latest
+    container_name: phantasm-db
+    volumes:
+      - phantasm-vault:/data/db
+    networks:
+      - trap-net
+    restart: always
+
+  phantasm-brain:
+    image: ollama/ollama:latest
+    container_name: phantasm-brain
+    volumes:
+      - phantasm-models:/root/.ollama
+    networks:
+      - trap-net
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+
+networks:
+  trap-net:
+    driver: bridge
+    # internal: true 
+    # Note: 'internal: true' prevents containers from accessing the wider internet.
+    # Keep it commented during the first run to allow Ollama to pull models (e.g., Llama3),
+    # then uncomment and restart (`docker-compose up -d`) to fully sandbox the network.
+
+volumes:
+  phantasm-vault:
+  phantasm-models:
